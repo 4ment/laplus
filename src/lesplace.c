@@ -107,10 +107,8 @@ double lesplace_minimize(gsl_function* F, double guess, double lower, double upp
 	return INFINITY;
 }
 
-void lesplace_gamma_fit(double(*likelihood)(void* data, size_t, double),
-						double(*dlikelihood)(void* data, size_t),
-						double(*d2likelihood)(void* data, size_t),
-						void(*reset)(void* data, size_t, double),
+void lesplace_gamma_fit(double(*logP)(void* data, size_t, double),
+						void(*dlogPs)(void* data, size_t, double*, double*),
 						void* data,
 						const double* mapes, size_t count,
 						double* parameters){
@@ -123,21 +121,23 @@ void lesplace_gamma_fit(double(*likelihood)(void* data, size_t, double),
 	
 	for (size_t i = 0; i < count; ++i) {
 		const double map = mapes[i];
-		double d2logP = d2likelihood(data, i);
+		double dlogP, d2logP;
+		dlogPs(data, i, &dlogP, &d2logP);
 		
 		double scale = -1.0/(map*d2logP);
 		double shape = map/scale + 1.0;
 		
 		// Very small branch -> exponential shape
 		if (map < 1.e-6 || d2logP >= 0) {
-			double dlogP = dlikelihood(data, i);
 			scale = 1.0/fabs(dlogP);
 			data_brent.value = scale;
 			
 			log_spaced_spaced_vector(x, map, 0.5, N);
-			for (size_t j = 0; j < N; j++) {
-				y[j] = likelihood(data, i, x[j]);
+			for (size_t j = 1; j < N; j++) {
+				y[j] = logP(data, i, x[j]);
 			}
+			y[0] = logP(data, i, map); // leaves the tree with its original branch
+			
 			double maxY = y[0];
 			for (size_t j = 0; j < N; j++) {
 				y[j] -= maxY;
@@ -148,17 +148,17 @@ void lesplace_gamma_fit(double(*likelihood)(void* data, size_t, double),
 			F.params = &data_brent;
 			
 			shape = lesplace_minimize(&F, 1, 0, 1, 1000);
-			
-			reset(data, i, map);
 		}
 		// Small branch with a maximum and spurious large variance
 		else if(shape/(scale*scale) > 0.1 && map < 0.0001){
 			data_brent.value = map;
 			
 			log_spaced_spaced_vector(x, map, 0.5, N);
-			for (size_t j = 0; j < N; j++) {
-				y[j] = likelihood(data, i, x[j]);
+			for (size_t j = 1; j < N; j++) {
+				y[j] = logP(data, i, x[j]);
 			}
+			y[0] = logP(data, i, map); // leaves the tree with its original branch
+			
 			double maxY = y[0];
 			for (size_t j = 0; j < N; j++) {
 				y[j] -= maxY;
@@ -170,8 +170,6 @@ void lesplace_gamma_fit(double(*likelihood)(void* data, size_t, double),
 			
 			shape = lesplace_minimize(&F, 2, 1, 100, 1000);
 			scale = map/(shape - 1);
-			
-			reset(data, i, map);
 		}
 	
 		parameters[i*2] = shape;
@@ -182,7 +180,7 @@ void lesplace_gamma_fit(double(*likelihood)(void* data, size_t, double),
 	free(yy);
 }
 
-double lesplace_gamma(double map, const double* mapes, size_t count, const double* parameters){
+double lesplace_gamma_with_parameters(double map, const double* mapes, size_t count, const double* parameters){
 	double  logP = map;
 	for (size_t i = 0; i < count; ++i) {
 		logP -= log(gsl_ran_gamma_pdf(mapes[i], parameters[i*2], parameters[i*2+1]));
@@ -190,3 +188,15 @@ double lesplace_gamma(double map, const double* mapes, size_t count, const doubl
 	return logP;
 }
 
+double lesplace_gamma(double(*logP)(void* data, size_t, double),
+					  void(*dlogPs)(void* data, size_t, double*, double*),
+					  void* data,
+					  size_t count,
+					  double map, const double* mapes){
+	
+	double* parameters = calloc(count*2, sizeof(double));
+	lesplace_gamma_fit(logP, dlogPs, data, mapes, count, parameters);
+	double logMarginal = lesplace_gamma_with_parameters(map, mapes, count, parameters);
+	free(parameters);
+	return logMarginal;
+}
