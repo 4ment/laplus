@@ -129,6 +129,7 @@ void lesplace_gamma_fit(double(*logP)(void* data, size_t, double),
 		
 		// Very small branch -> exponential shape
 		if (map < 1.e-6 || d2logP >= 0) {
+			shape = 1.0;
 			scale = 1.0/fabs(dlogP);
 			data_brent.value = scale;
 			
@@ -147,10 +148,16 @@ void lesplace_gamma_fit(double(*logP)(void* data, size_t, double),
 			F.function = &func_gamma_fixed_shape;
 			F.params = &data_brent;
 			
-			shape = lesplace_minimize(&F, 1, 0, 1, 1000);
+			double guess = 1.0 - 0.001;
+			if(func_gamma_fixed_mode(0, &data_brent) >= func_gamma_fixed_mode(guess, &data_brent)
+			   && func_gamma_fixed_mode(guess, &data_brent) <= func_gamma_fixed_mode(1, &data_brent)){
+				shape = lesplace_minimize(&F, guess, 0, 1, 1000);
+			}
 		}
 		// Small branch with a maximum and spurious large variance
 		else if(shape/(scale*scale) > 0.1 && map < 0.0001){
+			shape = 1.0;
+			scale = 1.0/fabs(dlogP);
 			data_brent.value = map;
 			
 			log_spaced_spaced_vector(x, map, 0.5, N);
@@ -168,8 +175,12 @@ void lesplace_gamma_fit(double(*logP)(void* data, size_t, double),
 			F.function = &func_gamma_fixed_mode;
 			F.params = &data_brent;
 			
-			shape = lesplace_minimize(&F, 2, 1, 100, 1000);
-			scale = map/(shape - 1);
+			double guess = 1.0 + 0.001;
+			if(func_gamma_fixed_mode(1, &data_brent) >= func_gamma_fixed_mode(guess, &data_brent)
+			   && func_gamma_fixed_mode(guess, &data_brent) <= func_gamma_fixed_mode(100, &data_brent)){
+				shape = lesplace_minimize(&F, guess, 1, 100, 1000);
+				scale = map/(shape - 1);
+			}
 		}
 	
 		parameters[i*2] = shape;
