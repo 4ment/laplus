@@ -1,0 +1,13 @@
+language: c
+env:
+  - GSL="gsl1"
+  - GSL="gsl2"
+before_install:
+  - if [ "$GSL" = "gsl1" ]; then sudo apt-get install -y libgsl0-dev; fi
+install:
+  - if [ "$GSL" = "gsl2" ]; then wget http://mirror.rise.ph/gnu/gsl/gsl-2.4.tar.gz && tar xvzf gsl-2.4.tar.gz && cd gsl-2.4 &&  ./configure && make && sudo make install && cd ..; fi
+compiler:
+  - clang
+  - gcc
+script:
+  - make
