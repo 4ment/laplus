@@ -149,8 +149,8 @@ void lesplace_gamma_fit(double(*logP)(void* data, size_t, double),
 			F.params = &data_brent;
 			
 			double guess = 1.0 - 0.001;
-			if(func_gamma_fixed_mode(0, &data_brent) >= func_gamma_fixed_mode(guess, &data_brent)
-			   && func_gamma_fixed_mode(guess, &data_brent) <= func_gamma_fixed_mode(1, &data_brent)){
+			if(func_gamma_fixed_shape(0, &data_brent) >= func_gamma_fixed_shape(guess, &data_brent)
+			   && func_gamma_fixed_shape(guess, &data_brent) <= func_gamma_fixed_shape(1, &data_brent)){
 				shape = lesplace_minimize(&F, guess, 0, 1, 1000);
 			}
 		}
