@@ -5,8 +5,8 @@ set(CMAKE_C_FLAGS "-std=c99 -Wall -pedantic")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 
 # Find GSL
-include(FindGsl)
-find_package(Gsl REQUIRED)
+include(FindGSL)
+find_package(GSL REQUIRED)
 include_directories(SYSTEM ${GSL_INCLUDE_DIRS})
 
 set(LESPLACE_LIB_C_HEADERS
