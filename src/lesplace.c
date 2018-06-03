@@ -155,7 +155,7 @@ void lesplace_gamma_fit(double(*logP)(void* data, size_t, double),
 			}
 		}
 		// Small branch with a maximum and spurious large variance
-		else if(shape/(scale*scale) > 0.1 && map < 0.0001){
+		else if(shape*(scale*scale) > 0.1 && map < 0.0001){
 			shape = 1.0;
 			scale = 1.0/fabs(dlogP);
 			data_brent.value = map;
