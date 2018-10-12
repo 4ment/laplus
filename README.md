@@ -1,7 +1,7 @@
 Laplace approximation using independent gamma distributions
 ======
 
-[![Build Status](https://travis-ci.org/4ment/lesplace.svg?branch=master)](https://travis-ci.org/4ment/lesplace)
+[![Build Status](https://travis-ci.org/4ment/laplus.svg?branch=master)](https://travis-ci.org/4ment/laplus)
 
 
 ## Building
@@ -10,7 +10,7 @@ Laplace approximation using independent gamma distributions
 
 Building the library requires [CMake](http://www.cmake.org).
 
-Compiling the lesplace C library requires the [GNU Scientific Library](http://www.gnu.org/software/gsl/).
+Compiling the laplus C library requires the [GNU Scientific Library](http://www.gnu.org/software/gsl/).
 
 On Debian/Ubuntu:
 

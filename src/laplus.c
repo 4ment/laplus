@@ -1,12 +1,4 @@
-//
-//  lesplace.c
-//  lesplace
-//
-//  Created by Mathieu Fourment on 15/3/18.
-//  Copyright © 2018 Mathieu Fourment. All rights reserved.
-//
-
-#include "lesplace.h"
+#include "laplus.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -77,7 +69,7 @@ double func_gamma_fixed_mode(double x, void* params){
 }
 
 
-double lesplace_minimize(gsl_function* F, double guess, double lower, double upper, size_t max_iter){
+double laplus_minimize(gsl_function* F, double guess, double lower, double upper, size_t max_iter){
 	const gsl_min_fminimizer_type* T = gsl_min_fminimizer_brent;
 	gsl_min_fminimizer* s = gsl_min_fminimizer_alloc (T);
 	gsl_min_fminimizer_set (s, F, guess, lower, upper);
@@ -107,7 +99,7 @@ double lesplace_minimize(gsl_function* F, double guess, double lower, double upp
 	return INFINITY;
 }
 
-void lesplace_gamma_fit(double(*logP)(void* data, size_t, double),
+void laplus_gamma_fit(double(*logP)(void* data, size_t, double),
 						void(*dlogPs)(void* data, size_t, double*, double*),
 						void* data,
 						const double* mapes, size_t count,
@@ -151,7 +143,7 @@ void lesplace_gamma_fit(double(*logP)(void* data, size_t, double),
 			double guess = 1.0 - 0.001;
 			if(func_gamma_fixed_shape(0.001, &data_brent) > func_gamma_fixed_shape(guess, &data_brent)
 			   && func_gamma_fixed_shape(guess, &data_brent) < func_gamma_fixed_shape(1, &data_brent)){
-				shape = lesplace_minimize(&F, guess, 0.001, 1, 1000);
+				shape = laplus_minimize(&F, guess, 0.001, 1, 1000);
 			}
 		}
 		// Small branch with a maximum and spurious large variance
@@ -178,7 +170,7 @@ void lesplace_gamma_fit(double(*logP)(void* data, size_t, double),
 			double guess = 1.0 + 0.001;
 			if(func_gamma_fixed_mode(1, &data_brent) > func_gamma_fixed_mode(guess, &data_brent)
 			   && func_gamma_fixed_mode(guess, &data_brent) < func_gamma_fixed_mode(100, &data_brent)){
-				shape = lesplace_minimize(&F, guess, 1, 100, 1000);
+				shape = laplus_minimize(&F, guess, 1, 100, 1000);
 				scale = map/(shape - 1);
 			}
 		}
@@ -191,7 +183,7 @@ void lesplace_gamma_fit(double(*logP)(void* data, size_t, double),
 	free(yy);
 }
 
-double lesplace_gamma_with_parameters(double map, const double* mapes, size_t count, const double* parameters){
+double laplus_gamma_with_parameters(double map, const double* mapes, size_t count, const double* parameters){
 	double  logP = map;
 	for (size_t i = 0; i < count; ++i) {
 		logP -= log(gsl_ran_gamma_pdf(mapes[i], parameters[i*2], parameters[i*2+1]));
@@ -199,15 +191,15 @@ double lesplace_gamma_with_parameters(double map, const double* mapes, size_t co
 	return logP;
 }
 
-double lesplace_gamma(double(*logP)(void* data, size_t, double),
+double laplus_gamma(double(*logP)(void* data, size_t, double),
 					  void(*dlogPs)(void* data, size_t, double*, double*),
 					  void* data,
 					  size_t count,
 					  double map, const double* mapes){
 	
 	double* parameters = calloc(count*2, sizeof(double));
-	lesplace_gamma_fit(logP, dlogPs, data, mapes, count, parameters);
-	double logMarginal = lesplace_gamma_with_parameters(map, mapes, count, parameters);
+	laplus_gamma_fit(logP, dlogPs, data, mapes, count, parameters);
+	double logMarginal = laplus_gamma_with_parameters(map, mapes, count, parameters);
 	free(parameters);
 	return logMarginal;
 }

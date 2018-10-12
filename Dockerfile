@@ -6,6 +6,6 @@ RUN apt-get update && \
 RUN apt-get install -y cmake \
                        libgsl0-dev
 
-COPY . /lesplace
-WORKDIR /lesplace
+COPY . /laplus
+WORKDIR /laplus
 RUN make
